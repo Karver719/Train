@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поезд</title>
+</head>
+<body>
+    <h1>Поезд</h1>
+    <div id="train-info"></div>
+
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+        // Функция для обновления данных на странице
+        function updateTrainInfo(data) {
+            // Ваш код для обновления визуализации
+            // Например, вы можете использовать D3.js для создания графика или просто обновить текст
+            var trainInfoElement = d3.select("#train-info");
+            trainInfoElement.text(JSON.stringify(data));
+        }
+
+        // Функция для подключения к серверу через EventSource
+        function connectToServer() {
+            var eventSource = new EventSource("/stream");
+
+            eventSource.onmessage = function (event) {
+                var data = JSON.parse(event.data);
+                updateTrainInfo(data);
+            };
+
+            eventSource.onerror = function (error) {
+                console.error("EventSource failed:", error);
+                eventSource.close();
+            };
+        }
+
+        // Подключение к серверу при загрузке страницы
+        window.onload = function () {
+            connectToServer();
+        };
+    </script>
+</body>
+</html>
