@@ -58,5 +58,5 @@ python data.py`
 
 # Результаты:
 
-![alt](image/web.png) 
+![alt](image/train.png) 
 ![alt](image/Postgre.png) 
