@@ -1,93 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Дорога с движущимся поездом</title>
   <style>
-    #road {
+    /* Контейнер для дороги и поезда */
+    .road-container {
+      position: relative;
+    }
+
+    /* Основная дорога */
+    .road {
       display: grid;
       grid-template-columns: repeat(20, 50px);
       grid-gap: 5px;
+      left: 10%;
+      top: 50%;
     }
+
+    /* Дополнительная дорога */
+    .road2 {
+      display: grid;
+      grid-template-columns: repeat(20, 50px);
+      grid-gap: 5px;
+      position: absolute;
+      left: 0%;
+      top: 120%;
+    }
+
+    /* Сегмент дороги */
     .road-segment {
       width: 50px;
       height: 50px;
-      background-color: #cccccc; 
-      border: 1px solid #000; 
+      background-color: #cccccc;
+      border: 1px solid #000;
     }
+
+    /* Цвет поезда */
     .train {
-      background-color: #3498db; 
+      background-color: #3498db;
     }
   </style>
 </head>
+
 <body>
 
-<div id="road"></div>
+  <!-- Контейнер для дороги и поезда -->
+  <div class="road-container">
+    <!-- Основная дорога -->
+    <div class="road" id="road"></div>
+    <!-- Дополнительная дорога -->
+    <div class="road2" id="road2"></div>
+  </div>
 
-<script src="https://d3js.org/d3.v5.min.js"></script>
+  <!-- Подключение библиотеки D3.js -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
 
-<script>
-  const road = document.getElementById('road');
-  const trainSegments = 2;
+  <script>
+    // Получение элементов дороги и дополнительной дороги
+    const road = document.getElementById('road');
+    const road2 = document.getElementById('road2');
+    
+    // Количество сегментов поезда
+    const trainSegments = 2;
 
-  function createRoad() {
-    road.innerHTML = '';
-    for (let i = 0; i < 20; i++) {
-      const segment = document.createElement('div');
-      segment.classList.add('road-segment');
-      road.appendChild(segment);
+    // Функция создания дороги
+    function createRoad() {
+      for (let i = 0; i < 20; i++) {
+        // Создание сегмента основной дороги
+        const segment = document.createElement('div');
+        segment.classList.add('road-segment');
+        road.appendChild(segment);
+
+        // Создание сегмента дополнительной дороги
+        const segment2 = document.createElement('div');
+        segment2.classList.add('road-segment');
+        road2.appendChild(segment2);
+      }
     }
-  }
 
-  function moveTrain(segments, trainIndex) {
-    setInterval(() => {
-      for (let i = 0; i < trainSegments; i++) {
-        segments[(trainIndex + i) % 20].classList.remove('train');
-      }
-
-      trainIndex = (trainIndex + 1) % 20;
-
-      for (let i = 0; i < trainSegments; i++) {
-        segments[(trainIndex + i) % 20].classList.add('train');
-      }
-
-      if (trainIndex === 0) {
+    // Функция перемещения поезда по дороге
+    function moveTrain(segments, trainIndex) {
+      setInterval(() => {
+        // Удаление класса "train" у предыдущих сегментов поезда
         for (let i = 0; i < trainSegments; i++) {
           segments[(trainIndex + i) % 20].classList.remove('train');
         }
-      }
-    }, 1000);
-  }
 
-  function connectToServer() {
-    const segments = road.getElementsByClassName('road-segment');
+        // Обновление индекса поезда
+        trainIndex = (trainIndex + 1) % 20;
 
-    var eventSource = new EventSource("/stream");
+        // Добавление класса "train" к новым сегментам поезда
+        for (let i = 0; i < trainSegments; i++) {
+          segments[(trainIndex + i) % 20].classList.add('train');
+        }
 
-    eventSource.onmessage = function (event) {
-      var data = JSON.parse(event.data);
-      updateTrainInfo(data);
-      moveTrain(segments, data['длина поезда']);
+        // Удаление класса "train" у последних сегментов поезда при достижении конца дороги
+        if (trainIndex === 0) {
+          for (let i = 0; i < trainSegments; i++) {
+            segments[(trainIndex + i) % 20].classList.remove('train');
+          }
+        }
+      }, 1000);
+    }
+
+    // Функция подключения к серверу и обработки данных о поезде
+    function connectToServer() {
+      // Получение всех сегментов дороги и дополнительной дороги
+      const segments = road.getElementsByClassName('road-segment');
+      const segments2 = road2.getElementsByClassName('road-segment');
+
+      // Создание объекта EventSource для отслеживания событий сервера
+      var eventSource = new EventSource("/stream");
+
+      // Обработчик события при получении новых данных от сервера
+      eventSource.onmessage = function (event) {
+        // Парсинг JSON-данных
+        var data = JSON.parse(event.data);
+        // Обновление информации о поезде
+        updateTrainInfo(data);
+        // Перемещение поезда по основной и дополнительной дорогам
+        moveTrain(segments, data['длина поезда']);
+        moveTrain(segments2, data['длина поезда']);
+      };
+
+      // Обработчик ошибки при подключении к серверу
+      eventSource.onerror = function (error) {
+        console.error("EventSource failed:", error);
+        // Закрытие соединения при ошибке
+        eventSource.close();
+      };
+    }
+
+    // Функция обновления информации о поезде
+    function updateTrainInfo(data) {
+      // Выбор элемента с информацией о поезде с использованием D3.js
+      var trainInfoElement = d3.select("#train-info");
+      // Обновление текста элемента с информацией
+      trainInfoElement.text(JSON.stringify(data));
+    }
+
+    // Функция, выполняющаяся при загрузке страницы
+    window.onload = function () {
+      // Подключение к серверу и создание дороги
+      connectToServer();
+      createRoad();
     };
-
-    eventSource.onerror = function (error) {
-      console.error("EventSource failed:", error);
-      eventSource.close();
-    };
-  }
-
-  function updateTrainInfo(data) {
-    var trainInfoElement = d3.select("#train-info");
-    trainInfoElement.text(JSON.stringify(data));
-  }
-
-  window.onload = function () {
-    connectToServer();
-    createRoad();
-  };
-
-</script>
+  </script>
 
 </body>
+
 </html>
