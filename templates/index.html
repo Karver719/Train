@@ -14,33 +14,27 @@
     /* Основная дорога */
     .road {
       display: grid;
-      grid-template-columns: repeat(20, 50px);
+      grid-template-columns: repeat(11, 50px);
       grid-gap: 5px;
-      left: 10%;
-      top: 50%;
-    }
-
-    /* Дополнительная дорога */
-    .road2 {
-      display: grid;
-      grid-template-columns: repeat(20, 50px);
-      grid-gap: 5px;
-      position: absolute;
-      left: 0%;
-      top: 120%;
+      position: relative;
+      top: 100px;
+      left: 10%; /* Центрирование дороги */
     }
 
     /* Сегмент дороги */
     .road-segment {
       width: 50px;
-      height: 50px;
+      height: 10px;
       background-color: #cccccc;
       border: 1px solid #000;
+      position: absolute;
     }
 
     /* Цвет поезда */
     .train {
       background-color: #3498db;
+      position: absolute;
+      top: 10%; /* Начальное положение поезда относительно дороги */
     }
   </style>
 </head>
@@ -50,57 +44,71 @@
   <!-- Контейнер для дороги и поезда -->
   <div class="road-container">
     <!-- Основная дорога -->
-    <div class="road" id="road"></div>
-    <!-- Дополнительная дорога -->
-    <div class="road2" id="road2"></div>
+    <div class="road" id="road">
+      <!-- Сегменты дороги -->
+      <div class="road-segment"></div>
+      <div class="road-segment" style="top: -20px;left: 55px;transform: rotate(-40deg);"></div>
+      <div class="road-segment" style="top: 20px;left: 55px;transform: rotate(40deg);"></div>
+      <div class="road-segment" style="top: -40px;left: 110px;"></div>
+      <div class="road-segment" style="top: 40px;left: 110px;"></div>
+      <div class="road-segment" style="top: -40px;left: 165px;"></div>
+      <div class="road-segment" style="top: 40px;left: 165px;"></div>
+      <div class="road-segment" style="top: -20px;left: 220px;transform: rotate(40deg);"></div>
+      <div class="road-segment" style="top: 20px;left: 220px;transform: rotate(-40deg);"></div>
+      <div class="road-segment" style="left: 275px;"></div>
+      <div class="road-segment" style="left: 330px;"></div>
+      <div class="road-segment" style="top: -20px;left: 385px;transform: rotate(-40deg);"></div>
+      <div class="road-segment" style="top: 20px;left: 385px;transform: rotate(40deg);"></div>
+      <div class="road-segment" style="top: -40px;left: 440px;"></div>
+      <div class="road-segment" style="top: 40px;left: 440px;"></div>
+      <div class="road-segment" style="top: -40px;left: 495px;"></div>
+      <div class="road-segment" style="top: 40px;left: 495px;"></div>
+      <div class="road-segment" style="top: -20px;left: 550px;transform: rotate(40deg);"></div>
+      <div class="road-segment" style="top: 20px;left: 550px;transform: rotate(-40deg);"></div>
+      <div class="road-segment" style="left: 605px;"></div>
+
+      <!-- Поезд -->
+      <div class="train"></div>
+    </div>
   </div>
 
   <!-- Подключение библиотеки D3.js -->
   <script src="https://d3js.org/d3.v5.min.js"></script>
 
   <script>
-    // Получение элементов дороги и дополнительной дороги
+    // Получение элементов дороги и поезда
     const road = document.getElementById('road');
-    const road2 = document.getElementById('road2');
-    
+    const train = document.querySelector('.train');
+
+    // Количество сегментов дороги
+    const roadSegments = document.querySelectorAll('.road-segment');
+
     // Количество сегментов поезда
     const trainSegments = 2;
 
-    // Функция создания дороги
-    function createRoad() {
-      for (let i = 0; i < 20; i++) {
-        // Создание сегмента основной дороги
-        const segment = document.createElement('div');
-        segment.classList.add('road-segment');
-        road.appendChild(segment);
-
-        // Создание сегмента дополнительной дороги
-        const segment2 = document.createElement('div');
-        segment2.classList.add('road-segment');
-        road2.appendChild(segment2);
-      }
-    }
+    // Индекс текущего сегмента поезда
+    let trainIndex = 0;
 
     // Функция перемещения поезда по дороге
-    function moveTrain(segments, trainIndex) {
+    function moveTrain() {
       setInterval(() => {
         // Удаление класса "train" у предыдущих сегментов поезда
         for (let i = 0; i < trainSegments; i++) {
-          segments[(trainIndex + i) % 20].classList.remove('train');
+          roadSegments[(trainIndex + i) % roadSegments.length].classList.remove('train');
         }
 
         // Обновление индекса поезда
-        trainIndex = (trainIndex + 1) % 20;
+        trainIndex = (trainIndex + 1) % roadSegments.length;
 
         // Добавление класса "train" к новым сегментам поезда
         for (let i = 0; i < trainSegments; i++) {
-          segments[(trainIndex + i) % 20].classList.add('train');
+          roadSegments[(trainIndex + i) % roadSegments.length].classList.add('train');
         }
 
         // Удаление класса "train" у последних сегментов поезда при достижении конца дороги
         if (trainIndex === 0) {
           for (let i = 0; i < trainSegments; i++) {
-            segments[(trainIndex + i) % 20].classList.remove('train');
+            roadSegments[(trainIndex + i) % roadSegments.length].classList.remove('train');
           }
         }
       }, 1000);
@@ -108,10 +116,6 @@
 
     // Функция подключения к серверу и обработки данных о поезде
     function connectToServer() {
-      // Получение всех сегментов дороги и дополнительной дороги
-      const segments = road.getElementsByClassName('road-segment');
-      const segments2 = road2.getElementsByClassName('road-segment');
-
       // Создание объекта EventSource для отслеживания событий сервера
       var eventSource = new EventSource("/stream");
 
@@ -122,8 +126,7 @@
         // Обновление информации о поезде
         updateTrainInfo(data);
         // Перемещение поезда по основной и дополнительной дорогам
-        moveTrain(segments, data['длина поезда']);
-        moveTrain(segments2, data['длина поезда']);
+        moveTrain();
       };
 
       // Обработчик ошибки при подключении к серверу
@@ -146,7 +149,6 @@
     window.onload = function () {
       // Подключение к серверу и создание дороги
       connectToServer();
-      createRoad();
     };
   </script>
 

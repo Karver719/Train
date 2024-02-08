@@ -12,16 +12,16 @@ def setup_rabbitmq():
     channel.exchange_declare(exchange='train_num', exchange_type='fanout')
     return connection, channel
 
-def setup_postgres():
-    # Устанавливаем соединение с PostgreSQL
-    db_connection = psycopg2.connect(
-        host='localhost',
-        user='postgres',
-        password='12345',
-        database='Train'
-    )
-    db_cursor = db_connection.cursor()
-    return db_connection, db_cursor
+# def setup_postgres():
+#     # Устанавливаем соединение с PostgreSQL
+#     db_connection = psycopg2.connect(
+#         host='localhost',
+#         user='postgres',
+#         password='12345',
+#         database='Train'
+#     )
+#     db_cursor = db_connection.cursor()
+#     return db_connection, db_cursor
 
 def send_train_data(channel):
     # Генерируем случайные данные поезда и отправляем их в RabbitMQ
@@ -48,7 +48,7 @@ def log_train_data(db_cursor, entrance_track, exit_track, train_length, timestam
 def main():
     # Инициализация RabbitMQ и PostgreSQL
     rabbitmq_connection, rabbitmq_channel = setup_rabbitmq()
-    postgres_connection, postgres_cursor = setup_postgres()
+    # postgres_connection, postgres_cursor = setup_postgres()
 
     try:
         while True:
@@ -59,7 +59,7 @@ def main():
             timestamp = datetime.now()
 
             send_train_data(rabbitmq_channel)
-            log_train_data(postgres_cursor, entrance_track, exit_track, train_length, timestamp)
+            # log_train_data(postgres_cursor, entrance_track, exit_track, train_length, timestamp)
 
             time.sleep(4)
 
@@ -68,8 +68,9 @@ def main():
     finally:
         # Закрытие соединений при завершении программы
         rabbitmq_connection.close()
-        postgres_cursor.close()
-        postgres_connection.close()
+        # postgres_cursor.close()
+        # postgres_connection.close()
 
 if __name__ == "__main__":
     main()
+    
